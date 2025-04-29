@@ -23,9 +23,8 @@
 
 <div class="main-container">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" style="margin-top: 105px;">
         <h3>Filter By</h3>
-
         <div class="filter-section">
             <h4>Categories</h4>
             {% for category in cat %}
@@ -50,39 +49,75 @@
 
     <!-- Main Content -->
     <div class="content">
-        <div class="search-bar">
-            <input type="text" name="query" placeholder="Search for items...">
-            <button type="submit">Search</button>
-            <button type="button">Filter</button>
-        </div>
+        <form method="get" action="{% url 'items' %}" style="position: relative;">
+            <div class="search-bar" style="position: relative; display: flex; gap: 8px;">
+                <input type="text" name="query" placeholder="Search for items..." id="search-input" value="{{ query }}">
+                <button type="submit">Search</button>
+            
+                <div style="position: relative;">
+                    <button type="button" onclick="toggleFilter()">Filter</button>
+            
+                    <div id="filter-options" style="
+                        display: none;
+                        position: absolute;
+                        top: 100%;
+                        left: 0;
+                        margin-top: 5px;
+                        padding: 10px;
+                        background-color: white;
+                        border: 1px solid #ccc;
+                        border-bottom: 5px solid #00c395;
+                        z-index: 100;
+                        border-radius: 5px;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                        width: 170px; /* a bit wider if needed */
+                        min-height: 80px; /* make it taller */
+                        text-align: left;
+                        color: black;
+                        font-size: 16px;
+                    ">
+                        <label>
+                            <input type="checkbox" name="filters" value="name" {% if 'name' in filters %}checked{% endif %}> Item Name
+                        </label><br>
+                        <label>
+                            <input type="checkbox" name="filters" value="seller" {% if 'seller' in filters %}checked{% endif %}> Seller
+                        </label><br>
+                        <label>
+                            <input type="checkbox" name="filters" value="category" {% if 'category' in filters %}checked{% endif %}> Category
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+        </form>
 
         {% for category in cat %}
-            <div class="category-box" data-category="{{ category.id }}">
-                <h1>{{ category.name }}</h1>
-                <div class="items">
-                    {% for product in pro %}
-                        {% if product.category.id == category.id and product.for_sale and product.owned_by.user != user %}
-                            <div class="item" 
-                                 data-category="{{ product.category.id }}" 
-                                 data-price="{{ product.price }}">
-                                <a href="{% url 'item' product.id %}">
-                                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                                </a>
-                                <h2>{{ product.name }},{{product.average_rating}}</h2>
-                                <p>Price: {{ product.price }}</p>
-                                <p>Available Stock: {{ product.quantity }}</p>
-                                <label for="quantity-{{ product.id }}">amount:</label>
-
-                             <form action="{% url 'add_to_cart' %}" method="get">
-                                <input type="number" id="quantity-{{ product.id }}" name="quantity" min="1" max="{{ product.quantity }}" value="1"></p>
+        <div class="category-box" data-category="{{ category.id }}">
+            <h1>{{ category.name }}</h1>
+            <div class="items">
+                {% for product in pro %}
+                    {% if product.category.id == category.id and product.for_sale %}
+                        <div class="item" 
+                            data-category="{{ product.category.id }}" 
+                            data-price="{{ product.price }}">
+                            <a href="{% url 'item' product.id %}">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                            </a>
+                            <h2>{{ product.name }}</h2>
+                            <p>Price: {{ product.price }}</p>
+                            <p>Available Stock: {{ product.quantity }}</p>
+                            <label for="quantity-{{ product.id }}">Amount:</label>
+        
+                            <form action="{% url 'add_to_cart' %}" method="get">
+                                <input type="number" id="quantity-{{ product.id }}" name="quantity" min="1" max="{{ product.quantity }}" value="1">
                                 <input type="hidden" name="product_id" value="{{ product.id }}">
                                 <button type="submit">Add to Cart</button>
                             </form>    
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
+        </div>
         {% endfor %}
     </div>
 </div>
@@ -93,7 +128,6 @@
         const minPrice = parseFloat(document.getElementById('min-price').value) || 0;
         const maxPrice = parseFloat(document.getElementById('max-price').value) || Infinity;
 
-        // Loop through each item
         document.querySelectorAll('.item').forEach(item => {
             const itemCategory = item.dataset.category;
             const itemPrice = parseFloat(item.dataset.price);
@@ -104,12 +138,20 @@
             item.style.display = (showByCategory && showByPrice) ? 'block' : 'none';
         });
 
-        // Now hide entire category boxes if all items inside are hidden
         document.querySelectorAll('.category-box').forEach(box => {
             const visibleItems = box.querySelectorAll('.item:not([style*="display: none"])');
             box.style.display = visibleItems.length > 0 ? 'block' : 'none';
         });
     });
+
+    function toggleFilter() {
+        var filterDiv = document.getElementById('filter-options');
+        if (filterDiv.style.display === 'none' || filterDiv.style.display === '') {
+            filterDiv.style.display = 'block';
+        } else {
+            filterDiv.style.display = 'none';
+        }
+    }
 </script>
 
 {% endblock content %}
